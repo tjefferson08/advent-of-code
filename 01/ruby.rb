@@ -17,7 +17,7 @@ def answer_captcha(input = nil)
                       i + 1
                     end
 
-    if input[i] === input[compare_index]
+    if input[i] == input[compare_index]
       acc += input[i].to_i
     end
   end
