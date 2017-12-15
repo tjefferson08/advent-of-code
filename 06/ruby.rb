@@ -15,12 +15,15 @@ def count_redistributions(raw_input)
   count = 0
   distributions = {}
   current_distribution = block_arr
+  prev_dist = nil
   while distributions["#{current_distribution}"].nil?
-    distributions["#{current_distribution}"] = true
+    distributions["#{current_distribution}"] = count
+    # puts "setting #{current_distribution} to #{count}"
     current_distribution = redistribute_blocks(block_arr)
     count += 1
   end
-  count
+  puts "dupe: #{current_distribution}"
+  count - distributions["#{current_distribution}"]
 end
 
 def redistribute_blocks(block_arr)
@@ -51,11 +54,11 @@ class TestMeme < Minitest::Test
     assert_equal([0, 2, 3, 4], redistribute_blocks([3, 1, 2, 3]))
     assert_equal([1, 3, 4, 1], redistribute_blocks([0, 2, 3, 4]))
     assert_equal([2, 4, 1, 2], redistribute_blocks([1, 3, 4, 1]))
+    # assert_equal(5, count_redistributions("0\t2\t7\t0\n"))
 
-    assert_equal(5, count_redistributions("0\t2\t7\t0\n"))
   end
 
   def test_things_phase_2
-    # assert_equal(10, count_jumps("0\n3\n0\n1\n-3\n"))
+    assert_equal(4, count_redistributions("0\t2\t7\t0\n"))
   end
 end
