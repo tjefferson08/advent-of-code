@@ -16,7 +16,6 @@
 (defn vertical? [[[x1 y1] [x2 y2]]]
   (= x1 x2))
 
-;; points-for seg ((7 0) (7 4))
 (defn points-for [seg]
   (let [[p1 p2] seg
         [x1 y1] p1
@@ -32,6 +31,19 @@
         (if (= p end)
           (set ps)
           (recur p-next (conj ps p-next)))))))
+
+(defn range-inclusive [a b]
+  (if (< a b)
+    (range a (inc b))
+    (range a (dec b) -1)))
+
+(defn points-for [seg]
+  (let [[p1 p2] seg
+        [x1 y1] p1
+        [x2 y2] p2]
+    (cond (= x1 x2) (map vector (repeat x1) (range-inclusive y1 y2))
+          (= y1 y2) (map vector (range-inclusive x1 x2) (repeat y1))
+          :else     (map vector (range-inclusive x1 x2) (range-inclusive y1 y2)))))
 
 (comment
 
@@ -80,8 +92,26 @@
  (points-for [[2 0] [0 2]])
  (points-for [[2 4] [2 1]])
 
- (assert (= (points-for [[2 0] [0 2]])
-            #{[2 0] [0 2] [1 1]}
-            #{[2 5] [2 3] [2 4] [2 2]}))
+ (assert (= (into #{} (points-for [[2 0] [0 2]]))
+            #{[2 0] [0 2] [1 1]}))
+
+
+ (->> (input->segments)
+      (mapcat points-for)
+      frequencies
+      (filter (fn [[pt occur]] (> occur 1)))
+      count)
+
+ (assert (= (into #{} (points-for [[2 0] [0 2]]))
+            #{[2 0] [0 2] [1 1]}))
+
+ (range-inclusive 1 5)
+
+ (range-inclusive 10 -5)
+
+ (map vector (repeat 1) (range-inclusive 1 3))
+ (map vector (range-inclusive 5 2) (repeat 10))
+ (map vector (range-inclusive 5 2) (range-inclusive 3 0))
+
 
  nil)
