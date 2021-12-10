@@ -13,7 +13,7 @@
 
 (def delims (set (keys delim-map)))
 (def points {")" 3, "]" 57, "}" 1197, ">" 25137})
-
+(def points-2 {")" 1, "]" 2, "}" 3, ">" 4})
 
 (defn parse [chunks]
   (reduce
@@ -23,6 +23,8 @@
            :else (reduced {:expected (delim-map top) :actual c})))
    '()
    chunks))
+
+(defn completion-score [coll])
 
 (comment
 
@@ -36,6 +38,15 @@
        (map :actual)
        (map points)
        (reduce +))
+
+  (->> state
+       (map parse)
+       (filter sequential?)
+       (map #(map delim-map %))
+       (map #(reduce (fn [score c] (+ (* score 5) (points-2 c))) 0 %))
+       sort
+       ((fn [coll] (nth coll (/ (count coll) 2)))))
+
 
 
 
