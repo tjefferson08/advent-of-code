@@ -1,5 +1,5 @@
-(def FILENAME "./input.txt")
-;; (def FILENAME "./simple_input.txt")
+;; (def FILENAME "./input.txt")
+(def FILENAME "./simple_input.txt")
 ;; (def FILENAME "./super_simple_input.txt")
 
 (def state (->> (line-seq (io/reader FILENAME))
@@ -67,7 +67,9 @@
        (map (fn [s] (count (filter zero? (vals s)))))
        (reduce +))
 
-
-
+  (->> (iterate next state)
+       (map (fn [s] (count (filter zero? (vals s)))))
+       (take-while #(< % 100))
+       count)
 
   nil)
