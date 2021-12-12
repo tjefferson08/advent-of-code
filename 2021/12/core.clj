@@ -17,16 +17,20 @@
 
 
 (defn paths
-  ([g] (paths g "start" "stop" #{}))
+  ([g] (paths g "start" "end" #{}))
   ([g start stop visited]
    (println start stop visited)
-   (let [next-candidates (set/difference (g start) visited)]
+   (let [next-candidates (set/difference (g start) visited)
+         visited'        (conj visited start)]
      (cond (= start stop)           (list (list stop))
            (empty? next-candidates) '()
-           :else                    (let [next-start (first next-candidates)
-                                          visited'   (conj visited start)]
-                                      (map #(conj % start)
-                                          (paths g next-start stop visited')))))))
+           :else (reduce
+                  (fn [acc next-start]
+                    (->> (paths g next-start stop visited')
+                         (map #(conj % start))
+                         (concat acc)))
+                  '()
+                  next-candidates)))))
 
 
 (comment
