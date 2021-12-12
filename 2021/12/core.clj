@@ -18,17 +18,32 @@
                   {})))
 
 
-(defn visitable-nodes [g visited start]
-  (->> (g start)
+;; (defn visitable-nodes [g visited start]
+;;   (->> (g start)
+;;        (filter #(if (= (str/upper-case %) %)
+;;                   true
+;;                   (zero? (visited %))))))
+
+(defn visitable-nodes [visited nodes]
+  (->> nodes
        (filter #(if (= (str/upper-case %) %)
                   true
                   (zero? (visited %))))))
 
+(defn pred-excluding [node]
+  (fn [visited nodes]
+    (->> nodes
+         (filter (fn [n]
+                   (cond (= (str/upper-case n) n) true
+                         (= n node)               (< (visited n) 2)
+                         :else                    (zero? (visited n))))))))
+
+
 (defn paths
-  ([g] (paths g "start" "end"))
-  ([g start stop] (paths g start stop (zipmap (keys g) (repeat 0))))
-  ([g start stop visited]
-   (let [next-candidates (visitable-nodes g visited start)
+  ([g pred] (paths g "start" "end" pred))
+  ([g start stop pred] (paths g start stop pred (zipmap (keys g) (repeat 0))))
+  ([g start stop pred visited]
+   (let [next-candidates (pred visited (g start))
          visited'        (update visited start inc)]
      ;; (println "start stop visited" start stop visited)
      ;; (println "next-candidates" next-candidates)
@@ -36,7 +51,7 @@
            (empty? next-candidates) '()
            :else (reduce
                   (fn [acc next-start]
-                    (->> (paths g next-start stop visited')
+                    (->> (paths g next-start stop pred visited')
                          (map #(conj % start))
                          (concat acc)))
                   '()
@@ -55,7 +70,7 @@
 
   (update {} :b conj :a)
 
-  (paths state)
+  (paths state visitable-nodes)
   (paths {:a #{:b} :b #{:a}} :a :b)
   (paths {:a #{:b} :b #{:d :a} :d #{:b}} :a :d)
   (paths {:a #{:b} :b #{:a :d :c} :c #{:e} :d #{:e} :e #{:c :d}} :a :e)
@@ -72,6 +87,22 @@
 
   (paths state)
 
-  (count (paths state))
+  (count (paths state visitable-nodes))
+
+  (count
+   (set
+    (concat
+     (paths state (pred-excluding "b"))
+     (paths state (pred-excluding "c"))
+     (paths state (pred-excluding "d")))))
+
+  (let [doubled-nodes (filter #(and (= (str/lower-case %) %)
+                                    ((complement #{"start" "end"}) %))
+                              (keys state))]
+    (->> doubled-nodes
+         (mapcat #(paths state (pred-excluding %)))
+         set
+         count))
+
 
   nil)
