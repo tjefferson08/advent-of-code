@@ -43,8 +43,8 @@
                        hit   (and x-hit y-hit)]
                    (if (or hit
                            (and (zero? vx) (< x (first target-x)))
-                           (and (zero? vx) (> x (second target-x)))
-                           (< y (second target-y)))
+                           (> x (second target-x))
+                           (< y (first target-y)))
                      (reduced {:hit? hit
                                :seq  (conj acc el)
                                :v    (:v (first p-seq))
@@ -94,13 +94,17 @@
                              (constrain (pos-seq vx vy))))
              (apply max-key :max-y)))
 
-
+  (time (->> (filter :hit? (for [vx (range 130)
+                                 vy (range -150 200)]
+                             (constrain (pos-seq vx vy))))
+             (map :v)
+             count))
 
   target-x
 
   target-y
 
- (constrain (pos-seq 15 73))
+ (constrain (pos-seq 6 0))
 
  (take 250 (pos-seq 13 74))
 
