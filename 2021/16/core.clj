@@ -16,7 +16,7 @@
 
 (defn packet-meta [bit-vec]
   (let [[version type :as pair] (take 2 (partition 3 bit-vec))]
-    {:version (bit-vec->dec version) :type type}))
+    {:version (bit-vec->dec version) :type (bit-vec->dec type)}))
 
 (defn parse-value-packet [bit-vec]
   (let [meta        (packet-meta bit-vec)
@@ -35,15 +35,15 @@
     {:meta meta :raw raw, :ln packet-ln, :sub-packets [], :value (bit-vec->dec value)}))
 
 (defn value-packet? [bit-vec]
-  (= [1 0 0] (:type (packet-meta bit-vec))))
+  (= 4 (:type (packet-meta bit-vec))))
 
 (defn type-1-op-packet? [bit-vec]
-  (and (not= [1 0 0] (:type (packet-meta bit-vec)))
+  (and (not= 4 (:type (packet-meta bit-vec)))
        (> (count bit-vec) 7)
        (= 1 (nth bit-vec 6))))
 
 (defn type-0-op-packet? [bit-vec]
-  (and (not= [1 0 0] (:type (packet-meta bit-vec)))
+  (and (not= 4 (:type (packet-meta bit-vec)))
        (> (count bit-vec) 7)
        (= 0 (nth bit-vec 6))))
 
@@ -90,7 +90,31 @@
                                    :sub-packets      sub-packets})
     :else (throw "hello")))
 
+(defn eval-packet [pkt]
+  (case (get-in pkt [:meta :type])
+    4 (pkt :value)
+    0 (reduce (fn [sum p] (+ sum (eval-packet p))) 0 (:sub-packets pkt))
+    1 (reduce (fn [prod p] (* prod (eval-packet p))) 1 (:sub-packets pkt))
+    2 (reduce (fn [mn p] (if (< mn (eval-packet p)) mn (eval-packet p))) Long/MAX_VALUE (:sub-packets pkt))
+    3 (reduce (fn [mx p] (if (> mx (eval-packet p)) mx (eval-packet p))) Long/MIN_VALUE (:sub-packets pkt))
+    5 (let [[p1 p2] (:sub-packets pkt)]
+        (if (> (eval-packet p1) (eval-packet p2))
+          1 0))
+    6 (let [[p1 p2] (:sub-packets pkt)]
+        (if (< (eval-packet p1) (eval-packet p2))
+          1 0))
+    7 (let [[p1 p2] (:sub-packets pkt)]
+        (if (= (eval-packet p1) (eval-packet p2))
+            1 0))
+    (throw "nooooo")))
+
+
+;; (parse (hex->bit-vec "D2FE28"))
+
 ;; (parse (hex->bit-vec "8A004A801A8002F478"))
+
+(eval-packet (parse (hex->bit-vec "D8005AC2A8F0")))
+
 (comment
 
   (map identity (seq "D2FE28"))
@@ -137,7 +161,25 @@
        (map #(get-in % [:meta :version]))
        (reduce +))
 
+  (eval-packet (parse (hex->bit-vec "D2FE28")))
+
+  (eval-packet (parse (hex->bit-vec "C200B40A82")))
+
+  (eval-packet (parse (hex->bit-vec "880086C3E88112")))
+
+  (eval-packet (parse (hex->bit-vec "CE00C43D881120")))
+
+  (eval-packet (parse (hex->bit-vec "D8005AC2A8F0")))
+
+  (eval-packet (parse (hex->bit-vec "F600BC2D8F")))
+
+  (eval-packet (parse (hex->bit-vec "9C005AC2F8F0")))
+
+  (eval-packet (parse (hex->bit-vec "9C0141080250320F1802104A08")))
+
+  (eval-packet (parse (hex->bit-vec input)))
 
 
 
- nil)
+
+  nil)
